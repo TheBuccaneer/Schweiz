@@ -1,0 +1,65 @@
+Hier ist eine **Checkliste**, die auf der ursprünglichen Kritik basiert und dir hilft, deinen Plan oder aktuelle Umsetzung darauf zu prüfen, ob alles abgedeckt ist. Wenn du durchgehst und „ja“ an alle Punkte kommen kannst, dann hast du ziemlich sicher eine gute Basis.
+
+---
+
+## Checkliste: Kritik-Punkte & Verbesserungsbedarf
+
+| Prüfpunkte                                      | Frage/Anforderung                                                                                                                                                | Ist es drin? (Ja / Teilweise / Nein) |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| **Stichprobengröße**                            | Liegt die geplante Anzahl Beobachtungen über allen Workloads & Größen zusammengenommen bei **mindestens \~400**? (Besser ≥ 800-1000, je nach erwarteter Varianz) |                                      |
+| **SESOI**                                       | Ist der **Smallest Effect Size of Interest** (z. B. ±5 % Energie-Delta) fest definiert und verbindlich gesetzt?                                                  |                                      |
+| **Mehr Workloads als Random Effect**            | Sind wenigstens **4-5 unterschiedliche Workload-Typen** geplant und als Random-Effect-Level vorgesehen (nicht nur GEMM)?                                         |                                      |
+| **Wiederholungen**                              | Hat jede Konfiguration (Gerät × Größe × Workload) eine ausreichende Zahl von Wiederholungen (z. B. ≥10) für stabile Schätzungen?                                 |                                      |
+| **Messbedingungen / Stabilität**                | Sind Maßnahmen zur Stabilisierung vorgesehen: Performance Governor, Aufwärmphase, Temperatur / Frequenzkontrolle, Hintergrundlast reduziert?                     |                                      |
+| **Overflow / negative Energie-Delta Kontrolle** | Gibt es Logik im Skript / Plan, um Energiedelta negativ oder außer Reichweite zu behandeln (z. B. bei Zählerüberlauf)?                                           |                                      |
+| **Einheitlichkeit der Energieeinheit**          | Wird Energie konsistent in Joule oder einer klar definierten Einheit gemessen und verglichen (nicht verschiedene Einheiten ohne Umrechnung)?                     |                                      |
+| **Power-Analyse / Simulation**                  | Gibt es eine geplante oder durchgeführte **Power-Simulation** (z. B. mit R „simr” oder „samplesize\_mixed”), um zu zeigen, wie viele Beobachtungen nötig sind?   |                                      |
+| **Metadaten Logging**                           | Werden Treiberversion, Device Modelle, Temperatur, Frequenz, ggf. Hintergrundlast etc. dokumentiert?                                                             |                                      |
+| **Threats / Limitationen dokumentiert**         | Sind Limitationen offen benannt: z. B. bei kleinen Effekten, Messgenauigkeit, Geräteanzahl, Repräsentativität etc.?                                              |                                      |
+
+---
+
+## Ein paar Quellen & Benchmarks, die sinnvoll sind zur Orientierung
+
+Damit du einschätzen kannst, wie diese Punkte typischerweise erfüllt werden, hier ein paar Referenzen:
+
+* `sjstats::samplesize_mixed(...)` Funktion in R: gibt Schätzungen, wie viele Beobachtungen nötig sind je nach Effektgröße, ICC & Anzahl Gruppen. ([Daniel][1])
+* „Sample size planning for linear mixed-effects models“ (Y Liu et al., 2024) – untersucht, wie viele Trials / Gruppen nötig sind, insbesondere wie Konfidenzintervallbreite & Power sich verbessern mit Stichprobengröße. ([journal.psych.ac.cn][2])
+* „Adequate Sample Sizes for a Three-Level Growth Model“ (Lee & Hong, 2021) – simuliert Bedingungen bei mehreren Ebenen (z. B. Zeitpunkte, Gruppen, Arbeitseinheiten) um zu zeigen, wie wenige Gruppen/Läufe zu ungenauen Varianzschätzungen führen. ([Frontiers][3])
+
+---
+
+Wenn du willst, kann ich dir diese Checkliste ausgefüllt zeigen, anhand deiner bisher gemachten Pilotdaten / Plan, damit du sehen kannst, was schon „Ja“ ist und was noch auf „Teilweise” oder „Nein“ steht — willst du das?
+
+[1]: https://strengejacke.github.io/sjstats/reference/samplesize_mixed.html?utm_source=chatgpt.com "Sample size for linear mixed models — samplesize_mixed"
+[2]: https://journal.psych.ac.cn/acps/EN/10.3724/SP.J.1041.2024.00124?utm_source=chatgpt.com "Sample size planning for linear mixed-effects models"
+[3]: https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2021.685496/full?utm_source=chatgpt.com "Adequate Sample Sizes for a Three-Level Growth Model"
+
+
+
+Weitere Sache:
+
+Du hast recht – sorry! Ich hab mich strikt an deine „Minischritt & auf OK warten“-Regel gehalten. Ergebnis: zu kleinteilig. Ab jetzt frontloade ich Blocker sofort (kurz & klar) und packe die konkreten Patches in den nächsten Schritt – weiterhin in Minischritten, aber ohne Stöckchenhopping. 🙏
+
+Was ich ab jetzt sofort upfront sage (Top-Fixes, kurz):
+
+Timer/Sync: Für Kurzläufe sind time.perf_counter() + CUDA-Events Pflicht; immer vorher & nachher synchronisieren.
+Speechmatics
++3
+Python documentation
++3
+NVIDIA Docs
++3
+
+Energie-0-Deltas: nvmlDeviceGetTotalEnergyConsumption() hat Auflösungsgrenzen → Batching (den Kernel N-mal im Messfenster laufen lassen, ~5–50 ms Gesamtdauer) macht ΔE messbar.
+NVIDIA Docs
+
+Fallback, falls NVML-Energie zu grob: Während des Batches Power sampeln (10–50 Hz) und integrieren (Trapezregel) → robustere J-Schätzung.
+NVIDIA Docs
+
+CPU-Energie korrekt zählen: RAPL hat Wrap-around – mit max_energy_range_uj abfangen; mehrere Package-Zonen ggf. summieren.
+Kernel Documentation
++1
+
+Minischritt (jetzt wirklich hilfreich): Soll ich dir sofort die zwei Mini-Patches liefern —
+(A) Power-Sampler-Thread + Integration und (B) RAPL-Wrap-Handling (je ~10–15 Zeilen, copy-paste)? Sag einfach okay.

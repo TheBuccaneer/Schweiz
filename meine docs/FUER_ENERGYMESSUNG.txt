@@ -1,0 +1,7 @@
+sudo modprobe msr
+
+sudo chmod +r /sys/class/powercap/intel-rapl:*/energy_uj
+
+cat /sys/class/powercap/intel-rapl:0/energy_uj
+
+python3 logger.py

@@ -1,0 +1,3 @@
+https://arxiv.org/html/2507.16781v1
+
+Längeres Warmup (60s) für vollständiges thermisches Gleichgewicht

@@ -1,0 +1,2 @@
+numpy==2.3.3
+nvidia-ml-py3==7.352.0
