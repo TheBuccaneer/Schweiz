@@ -1,0 +1,5 @@
+workload,intensity
+GEMM,compute_bound
+SpMV,memory_bound
+Reduction,memory_bound
+FFT_1D,mixed

@@ -1,0 +1,6 @@
+Nächste Messrunde — To-do (kurz)
+- OS: Linux; Logger: logger4.py (GPU-Energie NUR nvml_total_energy, kein Fallback).
+- Input: data/derived/plan_next_runs.csv (GEMM + Reduction, <2000 inkl.).
+- Für jeden Run: device/GPU-Modell, Treiber, Takt/Power-Limits, seed dokumentieren.
+- Output-Dateien: data/raw/next_full.csv und data/derived/next_standardized.csv.
+- Danach gleich 3.1–3.7 Pipeline wiederholen und Break-even <2000 prüfen.

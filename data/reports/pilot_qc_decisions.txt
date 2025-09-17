@@ -1,0 +1,23 @@
+Pilot QC/Harmonisierung
+Datum: 2025-09-17 13:41:16
+
+Energie-Policy:
+- GPU: nur nvml_total_energy mit plausibler Leistung [10, 450] W
+- CPU: rapl/rapl_pkg
+
+Nutzung (Zeilen):
+# A tibble: 3 × 3
+  device use_energy     n
+  <chr>  <lgl>      <int>
+1 CPU    TRUE          30
+2 GPU    FALSE         12
+3 GPU    TRUE          18
+
+Medianleistung (W, nur verwendete):
+# A tibble: 2 × 2
+  device median_power_W
+  <chr>           <dbl>
+1 CPU              41.9
+2 GPU             290. 
+
+Hinweis: power_integration_fallback_zero_counter wurde für GPU verworfen (verdächtig niedrige W).

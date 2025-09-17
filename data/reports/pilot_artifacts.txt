@@ -1,0 +1,13 @@
+Pilot-Artfakte (Pfad | Größe | mtime)
+data/derived/pilot_harmonized.csv                   7,034  2025-09-17 13:28:21.041542
+data/derived/pilot_summary_by_dws.csv                 985  2025-09-17 13:29:16.851603
+data/derived/pilot_comp.csv                           758  2025-09-17 13:41:16.481123
+data/derived/plan_next_sizes_gemm.csv                 279  2025-09-17 13:33:16.718761
+data/derived/plan_next_sizes_reduction.csv            441  2025-09-17 13:39:22.158905
+data/derived/plan_next_runs.csv                       830  2025-09-17 13:39:22.199127
+reports/appendix_pilot_summary.csv                    692  2025-09-17 13:43:00.662518
+reports/pilot_qc_decisions.txt                        598  2025-09-17 13:41:16.517208
+reports/pilot_mini_report.Rmd                         836  2025-09-17 13:51:23.882332
+figs/pilot_gemm_speedup.png                         8,697  2025-09-17 13:47:42.164749
+figs/pilot_gemm_energy_ratio.png                    9,921  2025-09-17 13:47:42.33007
+figs/qc_gpu_power_by_method.png                    12,902  2025-09-17 13:49:34.745028
