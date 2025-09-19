@@ -1,0 +1,43 @@
+System: rock-ms7a95
+CPU: Intel(R) Core(TM) i9-7900X CPU @ 3.30GHz
+GPU: NVIDIA GeForce RTX 3090
+Driver: 580.65.06
+Implementation: cub_cpp
+Data type: float32
+Target runtime: 1.2s
+Passes: 1
+Units: GiB
+Peak BW reference: 872.0 GiB/s
+Random seeds set for reproducibility
+
+Using specified N=536,870,912
+
+=== Energy Measurement Window ===
+Starting energy measurement...
+Results: kernel_ms=3582.109, result=268451000.0, bw=0.56 GiB/s
+
+=== Results ===
+Array size N: 536,870,912 (536.9M elements)
+Passes: 1
+Total bytes: 2,147,483,648 (2.00 GiB)
+Kernel time: 3582.109 ms (3.582 s)
+Energy window: 3.588 s
+Result: 2.684510e+08
+Bandwidth: 0.6 GiB/s
+Peak BW %: 0.1%
+Energy: 439.826 J
+Power: 122.6 W
+QC Status: QC_PASS (kernel time >= 1.2s: True)
+
+=== Validation ===
+Expected: 2.684510e+08
+Actual:   2.684510e+08
+Rel. error: 0.00e+00
+Tolerance: 5.0e-04
+Status: ✓ PASS
+✓ Validation passed
+
+Results appended to: data/raw/reduction_benchmark.csv
+
+💡 Cross-validation: Run with --impl cupy or --impl custom to compare performance
+   Expected: CUB (cub_cpp) >= cupy >= custom within ±5-10% tolerance
