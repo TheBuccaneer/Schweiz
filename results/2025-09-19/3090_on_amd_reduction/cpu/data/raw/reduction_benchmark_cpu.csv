@@ -1,0 +1,2 @@
+device,impl,dtype,N,passes,kernel_ms,kernel_time_s,bw_gib,pct_peak_bw,total_bytes,qc_pass,energy_J,power_W,qc_status,units,peak_bw_ref,cpu_name
+CPU,numpy,float32,16777216,500,2585.8813890008605,2.5858813890008605,12.084854368387893,24.169708736775785,33554432000,True,,,QC_PASS,GiB,50.0,AMD Ryzen Threadripper 3970X 32-Core Processor

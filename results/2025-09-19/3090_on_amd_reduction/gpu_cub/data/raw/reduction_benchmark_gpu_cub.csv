@@ -1,0 +1,2 @@
+device,impl,dtype,N,passes,kernel_ms,kernel_time_s,bw_gib,pct_peak_bw,total_bytes,qc_pass,energy_J,power_W,qc_status,units,peak_bw_ref,cpu_name,gpu_name,driver_version
+GPU,cub_cpp,float32,536870912,500,1199.443,1.199443,833.7203185145105,95.61012827001267,1073741824000,False,1490.4259999999776,155.1109737099144,QC_ACCEPTABLE_SHORT,GiB,872.0,AMD Ryzen Threadripper 3970X 32-Core Processor,NVIDIA GeForce RTX 3090,570.172.08

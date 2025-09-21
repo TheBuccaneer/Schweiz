@@ -1,0 +1,40 @@
+Minischritt — Reduction abschließen: 2 Checks + 1 Methods-Satz
+
+**Check 1 — Rangfolge & Verhältnis (GB/s):**
+Erwarte: **CuPy ≈ CUB > custom ≫ CPU**.
+Schnelltest (ein Befehl; liest deine gemeinsame CSV):
+
+```bash
+awk -F, 'NR==1{for(i=1;i<=NF;i++)h[$i]=i}
+$h["qc_status"]=="QC_PASS"{n[$h["impl"]]++; s[$h["impl"]]+=$h["bw_gib_s"]}
+END{for (k in n) printf "%-8s  BW_mean = %.2f GiB/s  (n=%d)\n", k, s[k]/n[k], n[k]}' data/raw/reduction_benchmark.csv
+```
+
+✅ Plausibel, wenn GPU-Implementierungen **hundert(e)** GiB/s liefern und **CPU** im niedrigen **zweistelligen** GiB/s-Bereich liegt.
+Bonus: Verhältnis GPU/CPU = (BW\_mean\_GPU)/(BW\_mean\_CPU) → typ. **≥ 30×** bei großen N.
+
+**Check 2 — Energie pro Datenmenge (J/GiB, „efficiency“):**
+Formel: **J/GiB = power\_w\_gpu / bw\_gib\_s** (bzw. CPU analog).
+
+```bash
+awk -F, 'NR==1{for(i=1;i<=NF;i++)h[$i]=i}
+$h["qc_status"]=="QC_PASS"{
+  if($h["impl"]=="cpu" && $h["power_w_cpu"]!="" && $h["bw_gib_s"]>0){
+    nC++; eC += $h["power_w_cpu"]/$h["bw_gib_s"];
+  }
+  if($h["impl"]!="cpu" && $h["power_w_gpu"]!="" && $h["bw_gib_s"]>0){
+    nG[$h["impl"]]++; eG[$h["impl"]] += $h["power_w_gpu"]/$h["bw_gib_s"];
+  }
+}
+END{
+  if(nC) printf "CPU   mean J/GiB = %.3f (n=%d)\n", eC/nC, nC;
+  for(k in nG) printf "%-6s mean J/GiB = %.3f (n=%d)\n", k, eG[k]/nG[k], nG[k];
+}' data/raw/reduction_benchmark.csv
+```
+
+✅ Plausibel, wenn **GPU-J/GiB < CPU-J/GiB** (trotz höherer W), d. h. GPU ist für diese memory-bound Reduktion **energieeffizienter pro übertragener GiB**.
+
+---
+
+**Methods-Satz (kurz, so ins Paper):**
+„Wir messen eine memory-bound Reduction (CUB, custom, CuPy, CPU-Baseline) mit **passes=500**, **Einheit GiB/s** und **Peak-Referenz 872 GiB/s**. Pro Konfiguration führen wir **5 Runs** durch, werten **nur `QC_PASS` (≥ 1.2 s Messfenster)** aus und mitteln. **GPU-Energie** erfassen wir via **NVML TotalEnergy** (Differenzen), **CPU-Energie** via **RAPL/powercap**. Vor jeder Session: **5 min Warm-up**, **GPU Persistence Mode**, **CPU Governor `performance`**; GUI/Background-Last minimal.“

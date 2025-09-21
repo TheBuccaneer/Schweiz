@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # Minimales GPU Stabilisierungs-Script für Energiemessungen
 
 echo "=== GPU Stabilization (Minimal) ==="
@@ -27,28 +26,25 @@ done
 echo ""
 echo "Warming up GPU for 60 seconds..."
 
-# Einfacher Warmup mit Python (falls cupy installiert)
-python3 -c "
-try:
-    import cupy as cp
-    import time
+# Warmup aus venv-Python
+VENV_PYTHON="$(pwd)/.venv/bin/python3"
+"$VENV_PYTHON" << 'EOF'
+import cupy as cp
+import time
 
-    # Die eine GPU aufwärmen
-    a = cp.random.random((6144, 6144), dtype=cp.float32)
-    b = cp.random.random((6144, 6144), dtype=cp.float32)
+# Erstelle große Matrizen einmal
+a = cp.ones((6144, 6144), dtype=cp.float32)
+b = cp.ones((6144, 6144), dtype=cp.float32)
 
-    start = time.time()
-    while time.time() - start < 60:  # 60 sec für die eine GPU
-        c = cp.dot(a, b)
-        cp.cuda.Stream.null.synchronize()
-    print('Warmup complete!')
-except:
-    print('Skipping warmup (cupy not installed)')
-" 2>/dev/null || echo "Skipping warmup"
+start = time.time()
+while time.time() - start < 60:
+    c = cp.dot(a, b)
+    cp.cuda.Stream.null.synchronize()
+    time.sleep(0.1)
+print("Warmup complete!")
+EOF
 
-# Status zeigen
 echo ""
 nvidia-smi --query-gpu=index,name,temperature.gpu,power.draw,clocks.current.graphics --format=table
-
 echo ""
 echo "GPUs ready for measurements!"

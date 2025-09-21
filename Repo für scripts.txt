@@ -1,0 +1,31 @@
+Kurze Erläuterung für reproduzierbares GPU-Warmup in Deiner venv:
+
+Stelle sicher, dass Dein Warmup-Block wirklich in der aktivierten Python-Umgebung ausgeführt wird und jeder Kernel-Aufruf fertig abgewartet wird. So läuft das Warmup zuverlässig 60 s:
+
+1. Wechsle ins Projekt-Verzeichnis und aktiviere das venv:
+   source .venv/bin/activate
+
+2. Verwende den venv-Python direkt und einen Heredoc-Block, um mehrzeiligen Code zu übergeben:
+   ```bash
+   VENV_PYTHON="$(pwd)/.venv/bin/python3"
+
+   $VENV_PYTHON << 'EOF'
+   import cupy as cp, time
+
+   # Einmalige Matrix-Erzeugung
+   a = cp.ones((6144, 6144), dtype=cp.float32)
+   b = cp.ones((6144, 6144), dtype=cp.float32)
+
+   # 60 s Warmup mit Synchronisation und kurzer Pause
+   start = time.time()
+   while time.time() - start < 60:
+       c = cp.dot(a, b)
+       cp.cuda.Stream.null.synchronize()
+       time.sleep(0.1)
+   print("Warmup complete!")
+   EOF
+   ```
+
+3. Kontrolliere danach mit `nvidia-smi`, dass die GPU über 60 s konstant unter Last war (Temperatur, Power Draw).
+
+Damit hast Du genau das Verhalten Deines alten Scripts reproduziert, ohne dass Bash-Zeilen versehentlich übersprungen werden.

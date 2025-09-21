@@ -1,0 +1,23 @@
+"CPU energy measurement uses platform-specific approaches: Intel via RAPL/powercap,
+AMD via uProf CLI due to amd_energy removal from Linux 5.13+ kernels."
+
+"AMD measurements depend on proprietary uProf toolchain, potentially limiting
+reproducibility compared to RAPL-based approaches."
+
+**Kurzabsatz (Reproduktion: Installation AMD uProf unter Linux/Ubuntu):**
+Für reproduzierbare CPU-Power/Energie-Messungen auf AMD-Systemen installiere **AMD uProf** per Debian-Paket von der offiziellen Download-Seite; bei DEB/RPM wird der **Power-Profiling-Treiber** automatisch gebaut und geladen (DKMS). Nach dem Download das Paket mit `dpkg -i amduprof_*.deb` installieren und optional den Pfad `/opt/AMDuProf_<Version>/bin` in `PATH` aufnehmen; die Installation lässt sich mit `AMDuProfCLI --version` prüfen. Bei Tarball-Installationen muss der Power-Profiling-Treiber manuell nach Anleitung installiert werden; falls der Build wegen Kernel-GCC-Mismatches scheitert, muss die zum Kernel passende GCC-Version vorhanden sein. ([AMD][1])
+
+[1]: https://www.amd.com/en/developer/uprof.html?utm_source=chatgpt.com "AMD μProf"
+
+Kurz gesagt messen wir die AMD-CPU-Energie anders als bei Intel, weil die Linux-Schnittstellen historisch uneinheitlich waren: Auf Intel ist powercap/RAPL seit Jahren stabil und liefert unter /sys/class/powercap/**/energy_uj verlässliche Zähler, die wir direkt differenzieren können.
+Kernel Documentation
++1
+ Bei AMD gab es zwar zunächst den hwmon-Treiber amd_energy (ab Kernel 5.1), der RAPL-basierte Energiezähler exponierte, dieser wurde jedoch mit Linux 5.13 wieder entfernt – u. a. aus Sicherheitsgründen. Folge: Systeme verloren eine konsistente sysfs-Quelle für Energie auf AMD.
+kernelconfig.io
++1
+ Erst später (ab Linux 5.8/5.11 je nach Zen-Generation) tauchte RAPL für AMD im powercap-Framework auf – und erscheint teils sogar unter dem Namenspräfix intel-rapl:*, was die automatische Erkennung erschwert und nicht auf allen Distros/Kernels gleich verfügbar ist.
+Phoronix
++2
+lkml.org
++2
+ Deshalb implementieren wir für AMD zweistufig: (1) nutzen, wo vorhanden, powercap/energy_uj exakt wie bei Intel; (2) andernfalls greifen wir auf AMD uProf (CLI Timechart) zurück und integrieren die gemessene Leistung (W) über das Messfenster zu Energie (J) – eine von AMD dokumentierte, plattformübergreifende Methode, die die Lücke schließt, wenn sysfs-Zähler fehlen.

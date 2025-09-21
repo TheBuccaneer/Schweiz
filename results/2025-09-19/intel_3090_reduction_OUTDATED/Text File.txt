@@ -1,0 +1,22 @@
+Minischritt — Klärung des Befehls
+
+Ja, das passt. **`python reduction_benchmark.py --impl custom --peak-bw 872 --units GiB`** ist äquivalent zu unserem bisherigen Aufruf — nur dass dein Script bei dir **`intel_3090_red.py`** heißt. Heißt: nutz einfach den Dateinamen, den du im Repo hast. Die relevanten Flags (`--impl`, `--peak-bw`, `--units`, optional `--passes`, `--cub-bin`) sind genau so vorgesehen.&#x20;
+
+Wenn du bei deinem Namen bleiben willst, sind die vier Standard-Calls (je **ein Run**) so:
+
+* **GPU custom:**
+  `python intel_3090_red.py --impl custom --target-runtime 1.2 --passes 200 --units GiB --peak-bw 872`&#x20;
+* **GPU CuPy:**
+  `python intel_3090_red.py --impl cupy --target-runtime 1.2 --passes 200 --units GiB --peak-bw 872`&#x20;
+* **GPU CUB (C++-Binary):**
+  `python intel_3090_red.py --impl cub_cpp --cub-bin ./build/cub_reduce --target-runtime 1.2 --passes 200 --units GiB --peak-bw 872`
+  (Binary-Name kommt aus deiner CMake: `cub_reduce`.)&#x20;
+* **CPU Baseline:**
+  `python intel_3090_red.py --impl cpu --target-runtime 1.2 --passes 200 --units GiB`&#x20;
+
+Hinweise (knapp):
+
+* **872 GiB/s** ist deine Peak-Referenz (≈ 936 GB/s der 3090); gut für `% of peak`.&#x20;
+* **Ein Aufruf = ein Run.** Für 5 Wiederholungen denselben Befehl 5× ausführen.&#x20;
+
+Sag **„Weiter“**, dann gebe ich dir als nächsten **einzigen** Minischritt die kleinste Run-Matrix (Reihenfolge der Befehle), damit du alle vier Implementierungen je 5× durchschießen kannst.

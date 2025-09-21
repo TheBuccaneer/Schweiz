@@ -18,7 +18,7 @@ for gpu_id in $(nvidia-smi --query-gpu=index --format=csv,noheader); do
     echo "  ✓ Memory clock reset to auto"
 
     # Reset Power Limit auf Default
-    sudo nvidia-smi -i $gpu_id -pl 0  # 0 = default/maximum
+   # sudo nvidia-smi -i $gpu_id -pl 0  # 0 = default/maximum
     echo "  ✓ Power limit reset to default"
 
     # Reset Application Clocks (falls gesetzt)
