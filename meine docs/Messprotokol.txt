@@ -1,0 +1,62 @@
+Minischritt 18 — **Messprotokoll (nur CUB, eingefroren)**
+
+**Zweck:** Zeit & Energie **deckungsgleich** am CUDA-Eventfenster messen; Energie via NVML-Total-Energy-Counter als **Start/Stop-Delta** (Zähler: mJ **seit letztem Treiber-Reload**, Volta+). ([NVIDIA Docs][1])
+**Timing:** `cudaEventRecord(start) → …kernel… → cudaEventRecord(stop); cudaEventSynchronize(stop); cudaEventElapsedTime` (ms). Das ist die empfohlene Methode für präzises Kernel-Timing. ([NVIDIA Docs][2])
+
+### A) Pflichtfelder (Konsole & CSV)
+
+Reihenfolge/Schlüssel exakt so (keine Umbenennungen), damit Auswertungen robust bleiben:
+
+1. `device` (`GPU`)
+2. `impl` (`cub_cpp`)
+3. `dtype` (`float32`)
+4. `N` (Array-Size)
+5. `passes` (In-Kernel-Repeats)
+6. `kernel_ms` (CUDA-Events, ms)
+7. `kernel_time_s` (= `kernel_ms/1000`)
+8. `bw_gib` **oder** `bw_gb` (nach `--units`)
+9. `pct_peak_bw` (optional, wenn `--peak-bw` gesetzt)
+10. `total_bytes` (passes×N×4)
+11. `qc_pass` (bool)
+12. `energy_J` (**aus Binary-Zeile**, Event-Delta)
+13. `power_W` (**aus Binary-Zeile**, `energy_J / kernel_time_s`)
+14. `qc_status` (`QC_PASS | QC_ACCEPTABLE_SHORT | QC_CRITICAL_TOO_SHORT`)
+15. `units` (`GiB` oder `GB`)
+16. `peak_bw_ref` (z. B. 872 GiB/s für RTX 3090 ≈ 936 GB/s Spec). ([EVGA][3])
+17. `cpu_name`, `gpu_name`, `driver_version`
+
+*(Diese Liste entspricht bereits deiner aktuellen CSV-Struktur; wir haben nur festgeschrieben, dass `energy_J/power_W` aus dem **Binary** stammen.)*
+
+### B) QC-Schwellen (nur CUB)
+
+* **Laufzeitfenster:** `kernel_time_s ≥ target_runtime_s` ⇒ `QC_PASS`; sonst:
+
+  * `≥ 1.0 s` ⇒ `QC_ACCEPTABLE_SHORT`
+  * `< 1.0 s` ⇒ `QC_CRITICAL_TOO_SHORT`
+    *(Begründung: Events messen nur Kernel; zu kurze Fenster erhöhen Varianz/Boost-Einfluss. Events sind dafür gedacht, genau das Fenster zu kapseln. )* ([NVIDIA Docs][2])
+* **Energie-Plausibilität:** `power_W` im **200–330 W**-Korridor für RTX 3090 bei memory-bound Reduktion und \~90% Peak-BW (hergeleitet aus 3090-TDP \~350 W und eurer gemessenen Last). Werte deutlich >350 W oder <150 W → Flag für manuelle Prüfung. ([GetDeploying][4])
+* **Bandbreite:** Erwartung **≥ 85 %** des Peak-Ref (z. B. 872 GiB/s) für CUB `DeviceReduce::Sum`; darunter → Umgebungs-Check (Thermals/Power-Limit/Clock). CUB ist als High-Performance-Primitive dokumentiert. ([NVIDIA Docs][5])
+
+### C) Auswerte-Formeln (fix)
+
+* `total_bytes = passes * N * 4` (float32)
+* `bw = total_bytes / unit_div / kernel_time_s`, mit `unit_div = 1024^3` (GiB) oder `1e9` (GB)
+* `pct_peak_bw = 100 * bw / peak_bw_ref` (falls gesetzt)
+* `power_W = energy_J / kernel_time_s` (beide **aus Binary-Fenster**, nicht aus Python-Fenster!)
+  *(NVML-Counter ist **mJ seit Driver-Reload** → **Delta** Start/Stop; genau das druckt euer Binary. )* ([NVIDIA Docs][1])
+
+### D) Log-Erwartungen (Konsolenausgabe)
+
+* Zeilen:
+  `sum=…`
+  `kernel_ms=…`
+  `energy_J=… power_W=…`  ← **muss** vorhanden sein
+  plus die bereits bestehenden Zusammenfassungen (inkl. „Energy window: … s“ aus Python; **nur informativ**, nicht für Felder verwenden).
+
+Wenn das so für dich passt, sag **„Weiter“** — dann übernehmen wir **dieselbe Protokollstruktur** für **CuPy** (minimale Anpassung: Energie aus Python-Fenster, bis wir optional CuPy ebenfalls im Binary-Stil kapseln) und danach für **Custom**; jeweils wieder im kleinsten möglichen Schritt.
+
+[1]: https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html?utm_source=chatgpt.com "5.16. Device Queries"
+[2]: https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__EVENT.html?utm_source=chatgpt.com "CUDA Runtime API :: CUDA Toolkit Documentation"
+[3]: https://www.evga.com/products/specs/gpu.aspx?pn=e2763314-163f-4391-8935-ea2c5dffd06b&utm_source=chatgpt.com "EVGA GeForce RTX 3090 FTW3 ULTRA GAMING, 24G-P5 ..."
+[4]: https://getdeploying.com/reference/cloud-gpu/nvidia-rtx3090?utm_source=chatgpt.com "Nvidia RTX 3090 - Price, Specs & Cloud Providers"
+[5]: https://docs.nvidia.com/cuda/cub/index.html?utm_source=chatgpt.com "CUB :: CUDA Toolkit Documentation"

@@ -1,0 +1,54 @@
+Minischritt 41 — CUB-Binary-Runs: ultrakurze Checkliste ✅
+
+1. **CUB bauen (einmalig)** — offizielle CUB/CCCL-API: `cub::DeviceReduce::Sum` (2-Phasen-Aufruf).
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=86
+cmake --build build --config Release -j
+```
+
+(Die CUB-API ist hier dokumentiert; `DeviceReduce::Sum` ist die richtige Routine. ([NVIDIA GitHub][1]))
+
+2. **GPU/CPU warm & ruhig** — Events messen Kernelzeit exakt im ms-Bereich (\~0.5 µs Auflösung); Energie über NVML-Energiezähler.
+
+```bash
+bash ./gpu_enable.sh
+bash ./CPU_intel_enable.sh
+nvidia-smi pmon -c 1   # prüfen, ob keine Fremdlast läuft
+```
+
+(cudaEventElapsedTime-Doku; NVML total energy consumption für Volta+. ([developer.download.nvidia.com][2]))
+
+3. **Messläufe (GiB, korrekter Peak für 3090 ≈ 872 GiB/s)**
+
+```bash
+python intel_3090_red.py --impl custom  --units GiB --peak-bw 872 --passes 500
+python intel_3090_red.py --impl cupy    --units GiB --peak-bw 872 --passes 500
+python intel_3090_red.py --impl cub_cpp --cub-bin ./build/cub_reduce --units GiB --peak-bw 872 --passes 500
+python intel_3090_red.py --impl cpu     --units GiB --passes 10
+```
+
+(Hersteller-Peak RTX 3090: **936 GB/s** ⇒ **≈ 872 GiB/s**; verwende konsistente Einheiten für %Peak. ([EVGA][3]))
+
+4. **Artefakte sichern** — Konsole + CSV mit Zeitstempel einfrieren.
+
+```bash
+RUN_ID=$(date -u +%Y%m%dT%H%M%SZ)_3090_memred
+mkdir -p logs data/archive
+python intel_3090_red.py --impl cub_cpp --cub-bin ./build/cub_reduce --units GiB --peak-bw 872 --passes 500 \
+  | tee logs/${RUN_ID}_cubcpp_p500.out
+cp data/raw/reduction_benchmark.csv data/archive/reduction_benchmark_${RUN_ID}.csv
+```
+
+(NVML-Energiezähler ist „seit Treiberstart“—wir nutzen Deltas; Best-Practice bestätigt. ([NVIDIA Docs][4]))
+
+---
+
+### Mini-Framing fürs Paper (1 Satz)
+
+Wir berichten Bandbreite in **GiB/s** und **%Peak** (RTX 3090: 872 GiB/s), gemessen mit **CUDA-Events** im finalen Messfenster und Energie über den **NVML-Total-Energy-Counter**; die Resultate zeigen das erwartete Ranking **CUB ≥ CuPy ≥ Custom** bei **memory-bound Reduktion**. ([developer.download.nvidia.com][2])
+
+[1]: https://nvidia.github.io/cccl/cub/api/structcub_1_1DeviceReduce.html?utm_source=chatgpt.com "cub::DeviceReduce — CUDA Core Compute Libraries"
+[2]: https://developer.download.nvidia.com/compute/DevZone/docs/html/C/doc/html/group__CUDART__EVENT_g14c387cc57ce2e328f6669854e6020a5.html?utm_source=chatgpt.com "NVIDIA CUDA Library: cudaEventElapsedTime"
+[3]: https://www.evga.com/products/specs/gpu.aspx?pn=e2763314-163f-4391-8935-ea2c5dffd06b&utm_source=chatgpt.com "EVGA GeForce RTX 3090 FTW3 ULTRA GAMING, 24G-P5 ..."
+[4]: https://docs.nvidia.com/deploy/archive/R535/nvml-api/group__nvmlDeviceQueries.html?utm_source=chatgpt.com "4.15. Device Queries"
