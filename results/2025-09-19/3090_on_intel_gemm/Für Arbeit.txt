@@ -1,0 +1,32 @@
+In den CSVs ist keine separate energy_window_s-Spalte geloggt. Da E/(P·Runtime) ≈ 2, ist naheliegend, dass Fensterzeit ≈ 2×Runtime. Fachlich ok — aber: für Transparenz (Paper-Tauglichkeit) solltest du energy_window_s explizit mitschreiben.
+
+Methodik dokumentieren: Phase klar definieren (bei euch: H2D + Compute, optional D2H), NVML-Zähler (mJ→J), Host-Sync vor dem After-Read. Quellen angeben (MLPerf-Power, NVML-Doku, CUDA-Events).
+
+Kurz: Ja, E2E ist Best Practice für eure Fragestellung; Compute-only gehört als zusätzliche Erklärung dazu — genau so empfehlen es Community-Standards und Hersteller-Dokus.
+
+
+Wieso „plausibel“?
+
+Power-Range passt: Die 3090 ist für ~350 W TGP ausgelegt; unter echter Last sieht man meist 250–380 W. Deine mean 275 W und max ~350 W sind konsistent.
+
+E2E-Fenster korrekt benutzt: NVMLs nvmlDeviceGetTotalEnergyConsumption ist ein kumulativer mJ-Zähler „seit Driver-Reload“. Sauber ist: Read vor Phase, GPU-Arbeit, Host-Sync, Read nach Phase → ΔE/Δt. Das ist genau dein Muster. (mJ → /1000 = J beachten.)
+
+Event-Zeit vs. E2E: CuPy/CUDA-Events messen nur die Zeit zwischen zwei Events; dass E ≈ P·(Fenster) > P·(Eventzeit) ist erwartbar, wenn dein Fenster Vorbereitung/Transfers enthält.
+
+Synchronisation vor dem After-Read (du machst Device().synchronize() im 3090_full.py): Best-Practice, damit der NVML-After-Read die volle Phase abdeckt.
+
+Kleine Auffälligkeiten (nicht kritisch)
+
+Power_min ~123 W: das sind frühe/zu kurze oder weniger belastete Messpunkte (Aufwärm-/Kopierphasen). Für die Auswertung ggf. nur QC-PASS (≥ 1.2 s) oder ein stabilisiertes Fenster nutzen.
+
+energy_window_s fehlt in der CSV: Du misst das Fenster zwar (siehe Code), aber loggst es hier nicht. Für Reviewer-Transparenz empfehle ich, es zusätzlich zu schreiben – dann wird die Relation E ≈ P·Fenster explizit. (Die NVML-Doku und Best-Practice-Guides erwarten phasenexakte Zuordnung.)
+
+Mini-Empfehlungen (ein Satz, kein Umbau)
+
+energy_window_s ins CSV aufnehmen (eine Spalte).
+
+Begriffe klar benennen: event_span_s (Events) ≠ e2e_time_s (= energy_window_s).
+
+Einheiten-Guard: sicherstellen, dass energy_j_gpu in Joule geloggt wird (NVML liefert mJ).
+
+Wenn du willst, gebe ich dir im nächsten Schritt einen Ein-Zeilen-Diff fürs Logging von energy_window_s (ohne sonst etwas zu ändern).
