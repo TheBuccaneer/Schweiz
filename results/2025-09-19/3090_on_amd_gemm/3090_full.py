@@ -19,9 +19,9 @@ os.environ.setdefault("CUPY_TF32", "0")          # CuPy: TF32 off by default
 os.environ.setdefault("NVIDIA_TF32_OVERRIDE", "0")  # NVIDIA libs: prefer FP32
 
 # Configuration - RTX 3090 only
-TARGET_RUNTIME_S = 1.2
-MAX_BATCH_SIZE = 50000
-MACRO_REPEATS = 3
+TARGET_RUNTIME_S = 1.0
+MAX_BATCH_SIZE = 60000
+MACRO_REPEATS = 5
 
 # GEMM sizes only
 GEMM_SIZES = [64, 96, 128, 160, 192, 224, 256, 320, 384, 448, 512, 640, 768, 896, 1024, 1152, 1280, 1408, 1536]
@@ -133,30 +133,37 @@ def main():
             'timestamp', 'host', 'device', 'device_model',
             'matrix_size', 'batch_size', 'runtime_s', 'gpu_kernel_time_s',
             'energy_j_gpu', 'power_w_gpu',
-            'qc_status', 'power_reliable'
+            'qc_status', 'power_reliable', 'energy_window_s'
         ])
 
         for size in GEMM_SIZES:
             print(f"\nGEMM size {size}x{size}")
 
-            # Prepare matrices
-            A = np.random.rand(size, size).astype(np.float32)
-            B = np.random.rand(size, size).astype(np.float32)
-            A_gpu = cp.array(A)
-            B_gpu = cp.array(B)
-
             for rep in range(1, MACRO_REPEATS + 1):
                 timestamp = datetime.now().isoformat()
 
-                # Measure energy before
+                # Prepare matrices fresh for each measurement (CPU work - outside timing)
+                A = np.random.rand(size, size).astype(np.float32)
+                B = np.random.rand(size, size).astype(np.float32)
+
+                # E2E Energy measurement starts HERE
                 t_energy_start = time.perf_counter()
                 gpu_energy_before = get_gpu_energy(gpu_handle)
+
+                # Host→Device transfers are now INSIDE the measurement
+                A_gpu = cp.array(A)
+                B_gpu = cp.array(B)
 
                 # Run GPU GEMM
                 batch_size, gpu_kernel_time, wall_time = run_gpu_gemm(A_gpu, B_gpu, TARGET_RUNTIME_S)
                 runtime = wall_time
 
-                # Measure energy after
+                # Device→Host transfer (für realistischen Use Case)
+                result = cp.asnumpy(A_gpu)  # ← DAS fehlt noch!
+                # Ensure all GPU work is complete before measuring energy
+                cp.cuda.Device().synchronize()
+
+                # E2E Energy measurement ends HERE
                 gpu_energy_after = get_gpu_energy(gpu_handle)
                 t_energy_end = time.perf_counter()
 
@@ -185,7 +192,7 @@ def main():
                     timestamp, host, 'GPU', gpu_name,
                     size, batch_size, runtime, gpu_kernel_time,
                     energy_gpu, power_gpu,
-                    qc_status, power_reliable
+                    qc_status, power_reliable, energy_window_s
                 ])
                 f.flush()
 

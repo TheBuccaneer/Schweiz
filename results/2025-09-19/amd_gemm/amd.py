@@ -13,14 +13,14 @@ import math
 from datetime import datetime
 
 # CRITICAL: Set BLAS threads BEFORE importing numpy
-os.environ.setdefault("OMP_NUM_THREADS", "1")
-os.environ.setdefault("MKL_NUM_THREADS", "1")
-os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+os.environ.setdefault("OMP_NUM_THREADS", "32")
+os.environ.setdefault("MKL_NUM_THREADS", "32")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "32")
 
 # Configuration - AMD CPU only
-TARGET_RUNTIME_S = 1.2
-MAX_BATCH_SIZE = 50000
-MACRO_REPEATS = 3
+TARGET_RUNTIME_S = 1.0
+MAX_BATCH_SIZE = 60000
+MACRO_REPEATS = 5
 
 # GEMM sizes only - same as Intel script
 GEMM_SIZES = [64, 96, 128, 160, 192, 224, 256, 320, 384, 448, 512, 640, 768, 896, 1024, 1152, 1280, 1408, 1536]
