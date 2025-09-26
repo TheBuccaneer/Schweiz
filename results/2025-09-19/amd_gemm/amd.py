@@ -13,9 +13,9 @@ import math
 from datetime import datetime
 
 # CRITICAL: Set BLAS threads BEFORE importing numpy
-os.environ.setdefault("OMP_NUM_THREADS", "32")
-os.environ.setdefault("MKL_NUM_THREADS", "32")
-os.environ.setdefault("OPENBLAS_NUM_THREADS", "32")
+os.environ.setdefault("OMP_NUM_THREADS", "64")
+os.environ.setdefault("MKL_NUM_THREADS", "64")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "64")
 
 # Configuration - AMD CPU only
 TARGET_RUNTIME_S = 1.0

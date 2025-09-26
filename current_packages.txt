@@ -1,0 +1,5 @@
+cupy-cuda12x==13.6.0
+fastrlock==0.8.3
+numpy==2.3.3
+nvidia-ml-py==13.580.82
+pynvml==13.0.1
