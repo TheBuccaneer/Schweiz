@@ -1,0 +1,9 @@
+cupy-cuda12x==13.5.1
+fastrlock==0.8.3
+numpy==2.3.3
+nvidia-cuda-nvrtc-cu12==12.8.93
+nvidia-cuda-runtime-cu12==12.8.90
+nvidia-ml-py==13.580.82
+pynvml==13.0.1
+setuptools==80.9.0
+wheel==0.45.1

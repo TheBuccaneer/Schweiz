@@ -1,2 +1,0 @@
-device,impl,dtype,N,passes,kernel_ms,kernel_time_s,bw_gib,pct_peak_bw,total_bytes,qc_pass,energy_J,power_W,qc_status,units,peak_bw_ref,cpu_name,gpu_name,driver_version
-CPU,cpu,float32,16777216,500,2422.6189619948855,2.4226189619948855,12.899263355169749,,33554432000,True,86.46578200001386,35.57680670391985,QC_PASS,GiB,,Intel(R) Core(TM) i9-7900X CPU @ 3.30GHz,NVIDIA GeForce RTX 3090,580.65.06
